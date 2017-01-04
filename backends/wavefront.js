@@ -88,6 +88,32 @@ function parseTags(metricName) {
   return tags;
 }
 
+function loginIN(metricName) {
+  var tags = [];
+  //stats.gauges.gauge1~tag=val~tag2=val2
+  var tagParts = metricName.split(wavefrontTagPrefix);
+  for (var i=1;i<tagParts.length;i++) {
+    if (i > 0) {
+      //does the tag have a value?
+      if (tagParts[i].substr(-1) === "=") {
+        continue;
+      }
+      tags.push(tagParts[i]);
+    }
+  }
+  //does this metric have a source tag?
+  if (("|" + tags.join("|")).indexOf("|source=") == -1) { // no
+    //is graphiteSourceStartsWith set?
+    if (graphiteSourceStartsWith != undefined && metricName.indexOf(graphiteSourceStartsWith) > -1) { //yes
+      //extract source from metric name
+      tags.push("source="+extractSourceTagValue(metricName,graphiteSourceStartsWith));
+    } else {
+      tags.push("source="+defaultSource);
+    }
+  }
+  return tags;
+}
+
 // Extracts a source tag from parts of a metic value based on a prefix
 function extractSourceTagValue(metricName, prefix) {
   parts = metricName.split(".")
